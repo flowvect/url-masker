@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>URL Masker & Shortener — Fast, Masked & Tracked Links</title>
+  <meta name="description" content="Modern high-performance URL shortener with link cloaking, custom aliases, click analytics, and expiration controls." />
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  
+  <style>
+    :root {
+      --bg-primary: #0a0e17;
+      --bg-surface: rgba(18, 26, 43, 0.75);
+      --bg-card: rgba(23, 33, 56, 0.65);
+      --bg-input: rgba(13, 20, 36, 0.85);
+      
+      --accent-cyan: #00f2fe;
+      --accent-blue: #4facfe;
+      --accent-purple: #8a2be2;
+      --accent-pink: #f72585;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #ef4444;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(0, 242, 254, 0.25);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+      
+      --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      --shadow-neon: 0 0 25px rgba(0, 242, 254, 0.3);
+      --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+      background-image: 
+        radial-gradient(circle at 15% 20%, rgba(79, 172, 254, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 85% 30%, rgba(138, 43, 226, 0.14) 0%, transparent 45%),
+        radial-gradient(circle at 50% 80%, rgba(0, 242, 254, 0.08) 0%, transparent 50%);
+      background-attachment: fixed;
+    }
+
+    /* Ambient animated mesh backdrop */
+    .ambient-glow {
+      position: fixed;
+      top: -10vw;
+      left: 30vw;
+      width: 40vw;
+      height: 40vw;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 242, 254, 0.15) 0%, rgba(138, 43, 226, 0.05) 50%, transparent 70%);
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 0;
+      animation: floatGlow 14s ease-in-out infinite alternate;
+    }
+
+    @keyframes floatGlow {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(80px, 60px) scale(1.15); }
+    }
+
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 24px 20px 80px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header & Navigation */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      margin-bottom: 48px;
+      background: var(--bg-surface);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-glass);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-main);
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 20px;
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(0, 242, 254, 0.4);
+    }
+
+    .brand-text {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: -0.5px;
+      background: linear-gradient(90deg, #ffffff, #c7d2fe);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      transition: var(--transition-smooth);
+      color: var(--text-muted);
+      border: 1px solid transparent;
+    }
+
+    .nav-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--border-subtle);
+    }
+
+    .nav-btn-primary {
+      background: rgba(0, 242, 254, 0.12);
+      color: var(--accent-cyan);
+      border-color: rgba(0, 242, 254, 0.3);
+    }
+
+    .nav-btn-primary:hover {
+      background: rgba(0, 242, 254, 0.22);
+      box-shadow: 0 0 16px rgba(0, 242, 254, 0.3);
+      color: #fff;
+    }
+
+    /* Hero Section */
+    .hero {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(138, 43, 226, 0.15);
+      border: 1px solid rgba(138, 43, 226, 0.3);
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #d8b4fe;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .hero-badge span.pulse-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--accent-cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-cyan);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .hero h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(32px, 5vw, 54px);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -1.5px;
+      margin-bottom: 16px;
+    }
+
+    .hero h1 .gradient-text {
+      background: linear-gradient(135deg, var(--accent-cyan) 10%, var(--accent-blue) 45%, var(--accent-purple) 90%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: 17px;
+      color: var(--text-muted);
+      max-width: 620px;
+      margin: 0 auto;
+    }
+
+    /* Shortener Card */
+    .shortener-card {
+      background: var(--bg-surface);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      box-shadow: var(--shadow-glass);
+      margin-bottom: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .shortener-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent-cyan), var(--accent-purple), transparent);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 16px;
+      color: var(--text-dim);
+      font-size: 18px;
+      pointer-events: none;
+    }
+
+    .main-input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px 18px 16px 46px;
+      font-size: 16px;
+      color: var(--text-main);
+      outline: none;
+      transition: var(--transition-smooth);
+      font-family: inherit;
+    }
+
+    .main-input:focus {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 0 3px rgba(0, 242, 254, 0.15), var(--shadow-neon);
+      background: rgba(13, 20, 36, 0.95);
+    }
+
+    .main-input::placeholder {
+      color: var(--text-dim);
+    }
+
+    /* Advanced Options Grid */
+    .options-toggle-btn {
+      background: none;
+      border: none;
+      color: var(--accent-cyan);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 16px;
+      transition: var(--transition-smooth);
+    }
+
+    .options-toggle-btn:hover {
+      color: #fff;
+    }
+
+    .advanced-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      margin-bottom: 24px;
+      display: none;
+    }
+
+    .advanced-grid.show {
+      display: grid;
+    }
+
+    .option-input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 14px;
+      color: var(--text-main);
+      outline: none;
+      font-family: inherit;
+      transition: var(--transition-smooth);
+    }
+
+    .option-input:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    /* Masking switch toggle */
+    .toggle-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: rgba(138, 43, 226, 0.08);
+      border: 1px solid rgba(138, 43, 226, 0.2);
+      border-radius: var(--radius-sm);
+    }
+
+    .toggle-info h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #e0e7ff;
+    }
+
+    .toggle-info p {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.15);
+      transition: .3s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Submit Button */
+    .submit-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue), var(--accent-purple));
+      background-size: 200% 200%;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 16px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: #050b14;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: var(--transition-smooth);
+      box-shadow: 0 4px 20px rgba(0, 242, 254, 0.35);
+    }
+
+    .submit-btn:hover {
+      background-position: right center;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 242, 254, 0.5);
+      color: #000;
+    }
+
+    .submit-btn:active {
+      transform: translateY(0);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Result Box */
+    .result-box {
+      margin-top: 28px;
+      padding: 20px;
+      background: rgba(0, 242, 254, 0.05);
+      border: 1px solid rgba(0, 242, 254, 0.25);
+      border-radius: var(--radius-md);
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .result-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .result-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--accent-emerald);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .result-url-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .result-url-input {
+      flex: 1;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      font-family: monospace;
+    }
+
+    .action-btn {
+      padding: 12px 18px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+    }
+
+    .copy-btn {
+      background: var(--accent-cyan);
+      color: #050b14;
+      border: none;
+    }
+
+    .copy-btn:hover {
+      background: #70ffff;
+      box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+    }
+
+    .open-btn {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+    }
+
+    .open-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Recent Links Table */
+    .section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .table-container {
+      background: var(--bg-surface);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow-x: auto;
+      box-shadow: var(--shadow-glass);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 14px 18px;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.6px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    td {
+      padding: 16px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text-main);
+    }
+
+    .short-code-cell {
+      font-weight: 600;
+      color: var(--accent-cyan);
+      font-family: monospace;
+      font-size: 14px;
+    }
+
+    .destination-cell {
+      max-width: 280px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text-dim);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge-active {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-emerald);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-inactive {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--accent-rose);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .badge-masked {
+      background: rgba(138, 43, 226, 0.15);
+      color: #d8b4fe;
+      border: 1px solid rgba(138, 43, 226, 0.3);
+    }
+
+    .badge-plain {
+      background: rgba(79, 172, 254, 0.15);
+      color: var(--accent-blue);
+      border: 1px solid rgba(79, 172, 254, 0.3);
+    }
+
+    .click-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .table-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn-icon-sm {
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 12px;
+      transition: var(--transition-smooth);
+      text-decoration: none;
+    }
+
+    .btn-icon-sm:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+
+    .btn-delete:hover {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: var(--accent-rose);
+    }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #111c33;
+      border: 1px solid var(--accent-cyan);
+      color: #fff;
+      padding: 14px 20px;
+      border-radius: var(--radius-md);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), var(--shadow-neon);
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 100;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      margin-top: 60px;
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-glow"></div>
+  
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <a href="/" class="brand">
+        <div class="brand-icon">⚡</div>
+        <div class="brand-text">URL Masker</div>
+      </a>
+      <nav class="nav-links">
+        <a href="/docs" target="_blank" class="nav-btn nav-btn-primary">
+          <span>📚 API Docs</span>
+        </a>
+        <a href="/health" target="_blank" class="nav-btn">
+          <span>💚 Health</span>
+        </a>
+      </nav>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-badge">
+        <span class="pulse-dot"></span>
+        <span>High-Performance Base62 Engine</span>
+      </div>
+      <h1>Shorten, Cloak & <span class="gradient-text">Track Any URL</span></h1>
+      <p>Transform long URLs into fast short links or cloak the destination page while keeping your branded domain in the address bar.</p>
+    </section>
+
+    <!-- Shortener Form -->
+    <section class="shortener-card">
+      <form id="shortenerForm">
+        <div class="form-group">
+          <div class="form-label">
+            <span>Destination URL</span>
+            <span style="font-size: 11px; color: var(--text-dim);">HTTP / HTTPS required</span>
+          </div>
+          <div class="input-wrapper">
+            <span class="input-icon">🔗</span>
+            <input 
+              type="url" 
+              id="longUrl" 
+              class="main-input" 
+              placeholder="https://your-very-long-destination-url.com/campaign/promo" 
+              required 
+              autocomplete="off"
+            />
+          </div>
+        </div>
+
+        <button type="button" class="options-toggle-btn" id="toggleOptions">
+          <span>⚙️ Advanced Options (Custom alias, Masking, Expiration)</span>
+          <span id="toggleArrow">▼</span>
+        </button>
+
+        <div class="advanced-grid" id="advancedOptions">
+          <div>
+            <label class="form-label" for="customAlias">Custom Short Code</label>
+            <input 
+              type="text" 
+              id="customAlias" 
+              class="option-input" 
+              placeholder="e.g. spring-sale-2026" 
+              pattern="^[a-zA-Z0-9_-]+$"
+              maxlength="50"
+            />
+          </div>
+
+          <div>
+            <label class="form-label" for="expiresAt">Expiration Date (UTC)</label>
+            <input 
+              type="datetime-local" 
+              id="expiresAt" 
+              class="option-input" 
+            />
+          </div>
+
+          <div>
+            <label class="form-label" for="maxClicks">Max Clicks Limit</label>
+            <input 
+              type="number" 
+              id="maxClicks" 
+              class="option-input" 
+              placeholder="e.g. 100" 
+              min="1"
+            />
+          </div>
+
+          <div class="toggle-card">
+            <div class="toggle-info">
+              <h4>Mask / Cloak URL</h4>
+              <p>Keep short domain in address bar</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="isMasked" />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">
+          <span>✨ Create Short Link</span>
+        </button>
+      </form>
+
+      <!-- Result View -->
+      <div class="result-box" id="resultBox">
+        <div class="result-header">
+          <span class="result-title">🎉 Your Link is Ready!</span>
+          <span class="result-badge" id="resultModeBadge">302 Redirect</span>
+        </div>
+        <div class="result-url-row">
+          <input type="text" id="resultUrlInput" class="result-url-input" readonly />
+          <button type="button" class="action-btn copy-btn" id="copyBtn">📋 Copy</button>
+          <a href="#" target="_blank" class="action-btn open-btn" id="openLinkBtn">↗ Open</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recent Links Section -->
+    <section>
+      <div class="section-title">
+        <span>📊 Created Links</span>
+        <button class="btn-icon-sm" id="refreshBtn" style="margin-left: auto;">🔄 Refresh</button>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Short Code</th>
+              <th>Destination URL</th>
+              <th>Mode</th>
+              <th>Status</th>
+              <th>Clicks</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="linksTableBody">
+            <tr>
+              <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-dim);">
+                Loading links...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <p>URL Shortener & Masking Tool &bull; FastAPI + PostgreSQL &bull; Built with custom Base62 engine</p>
+    </footer>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">
+    <span id="toastIcon">✅</span>
+    <span id="toastMsg">Notification message</span>
+  </div>
+
+  <script>
+    const baseUrl = window.location.origin;
+
+    // Elements
+    const form = document.getElementById('shortenerForm');
+    const toggleOptions = document.getElementById('toggleOptions');
+    const advancedOptions = document.getElementById('advancedOptions');
+    const toggleArrow = document.getElementById('toggleArrow');
+    const submitBtn = document.getElementById('submitBtn');
+    const resultBox = document.getElementById('resultBox');
+    const resultUrlInput = document.getElementById('resultUrlInput');
+    const resultModeBadge = document.getElementById('resultModeBadge');
+    const copyBtn = document.getElementById('copyBtn');
+    const openLinkBtn = document.getElementById('openLinkBtn');
+    const linksTableBody = document.getElementById('linksTableBody');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toastMsg');
+
+    // Toggle Advanced Options
+    toggleOptions.addEventListener('click', () => {
+      advancedOptions.classList.toggle('show');
+      toggleArrow.textContent = advancedOptions.classList.contains('show') ? '▲' : '▼';
+    });
+
+    // Toast helper
+    function showToast(msg, icon = '✅') {
+      toastMsg.textContent = msg;
+      document.getElementById('toastIcon').textContent = icon;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // Copy to clipboard
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(resultUrlInput.value);
+        showToast('Short URL copied to clipboard!', '📋');
+      } catch (err) {
+        resultUrlInput.select();
+        document.execCommand('copy');
+        showToast('Short URL copied!', '📋');
+      }
+    });
+
+    // Handle Form Submit
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>⏳ Generating...</span>';
+
+      const payload = {
+        long_url: document.getElementById('longUrl').value.trim(),
+        custom_alias: document.getElementById('customAlias').value.trim() || null,
+        is_masked: document.getElementById('isMasked').checked,
+        expires_at: document.getElementById('expiresAt').value ? new Date(document.getElementById('expiresAt').value).toISOString() : null,
+        max_clicks: document.getElementById('maxClicks').value ? parseInt(document.getElementById('maxClicks').value) : null
+      };
+
+      try {
+        const res = await fetch('/api/links', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.detail || 'Failed to create short link');
+        }
+
+        // Show result
+        resultUrlInput.value = data.short_url;
+        openLinkBtn.href = data.short_url;
+        resultModeBadge.textContent = data.is_masked ? '🛡️ Cloaked / Masked' : '⚡ 302 Redirect';
+        resultBox.style.display = 'block';
+        resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+        showToast('Link created successfully!', '🎉');
+        fetchLinks();
+      } catch (err) {
+        showToast(err.message, '⚠️');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>✨ Create Short Link</span>';
+      }
+    });
+
+    // Fetch and display links
+    async function fetchLinks() {
+      try {
+        const res = await fetch('/api/links?limit=50');
+        const data = await res.json();
+        
+        if (!data.items || data.items.length === 0) {
+          linksTableBody.innerHTML = `
+            <tr>
+              <td colspan="7" style="text-align: center; padding: 32px; color: var(--text-dim);">
+                No links created yet. Shorten your first link above!
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        linksTableBody.innerHTML = data.items.map(link => {
+          const dateStr = new Date(link.created_at).toLocaleDateString(undefined, {
+            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+          });
+          const fullShortUrl = `${baseUrl}/${link.short_code}`;
+
+          return `
+            <tr>
+              <td class="short-code-cell">
+                <a href="${fullShortUrl}" target="_blank" style="color: var(--accent-cyan); text-decoration: none;">
+                  /${link.short_code}
+                </a>
+              </td>
+              <td class="destination-cell" title="${link.long_url}">${link.long_url}</td>
+              <td>
+                <span class="badge ${link.is_masked ? 'badge-masked' : 'badge-plain'}">
+                  ${link.is_masked ? 'Masked' : 'Redirect'}
+                </span>
+              </td>
+              <td>
+                <span class="badge ${link.is_active ? 'badge-active' : 'badge-inactive'}">
+                  ${link.is_active ? 'Active' : 'Deactivated'}
+                </span>
+              </td>
+              <td>
+                <span class="click-pill">👁️ ${link.click_count}${link.max_clicks ? ` / ${link.max_clicks}` : ''}</span>
+              </td>
+              <td style="font-size: 12px;">${dateStr}</td>
+              <td>
+                <div class="table-actions">
+                  <button class="btn-icon-sm" onclick="copyLink('${fullShortUrl}')" title="Copy URL">📋</button>
+                  <a href="${fullShortUrl}" target="_blank" class="btn-icon-sm" title="Visit">↗</a>
+                  ${link.is_active ? `<button class="btn-icon-sm btn-delete" onclick="deleteLink('${link.id}')" title="Deactivate">🗑️</button>` : ''}
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+      } catch (err) {
+        linksTableBody.innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 24px; color: var(--accent-rose);">
+              Failed to load links. Check server connection.
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    // Copy link helper
+    window.copyLink = async (url) => {
+      try {
+        await navigator.clipboard.writeText(url);
+        showToast('Copied to clipboard!', '📋');
+      } catch (e) {
+        showToast(url, '📋');
+      }
+    };
+
+    // Deactivate link
+    window.deleteLink = async (linkId) => {
+      if (!confirm('Are you sure you want to deactivate this link?')) return;
+      try {
+        const res = await fetch(`/api/links/${linkId}`, { method: 'DELETE' });
+        if (res.ok) {
+          showToast('Link deactivated', '🗑️');
+          fetchLinks();
+        } else {
+          showToast('Failed to deactivate link', '⚠️');
+        }
+      } catch (err) {
+        showToast('Network error', '⚠️');
+      }
+    };
+
+    refreshBtn.addEventListener('click', fetchLinks);
+
+    // Initial load
+    fetchLinks();
+  </script>
+</body>
+</html>
