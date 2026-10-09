@@ -24,14 +24,13 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 async def lifespan(app: FastAPI):
     """Startup / shutdown lifecycle.
 
-    In development, auto-creates tables if DB is accessible.
+    Auto-creates database tables when DB is connected.
     """
-    if settings.ENVIRONMENT == "development":
-        try:
-            async with engine.begin() as conn:
-                await conn.run_sync(Base.metadata.create_all)
-        except Exception as e:
-            print(f"Database initialization warning (check DATABASE_URL): {e}")
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    except Exception as e:
+        print(f"Database initialization notice (check DATABASE_URL): {e}")
     yield
     try:
         await engine.dispose()
@@ -62,10 +61,19 @@ app.add_middleware(
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 async def home_page(request: Request):
     """Serve the Web UI for shortening and masking URLs."""
+    forwarded_proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+    forwarded_host = request.headers.get("x-forwarded-host", request.headers.get("host"))
+    current_url = f"{forwarded_proto}://{forwarded_host}".rstrip("/") if forwarded_host else settings.effective_base_url
+    
     return templates.TemplateResponse(
         request=request,
         name="index.html",
-        context={"base_url": settings.BASE_URL},
+        context={
+            "base_url": current_url,
+            "github_url": settings.GITHUB_REPO_URL,
+            "environment": settings.ENVIRONMENT,
+            "is_serverless": settings.is_serverless,
+        },
     )
 
 

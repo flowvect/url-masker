@@ -1,11 +1,14 @@
-"""Link management endpoints — create, list, get, update, delete."""
+"""Link management endpoints — create, list, get, update, delete.
+
+Dynamically constructs short URLs from the incoming request or Vercel environment.
+"""
 
 from __future__ import annotations
 
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,12 +29,25 @@ router = APIRouter(prefix="/api/links", tags=["links"])
 
 # ── Helpers ───────────────────────────────────────────────────────────────
 
-def _link_to_response(link: Link) -> LinkResponse:
-    """Map an ORM Link to a public response, injecting the full short URL."""
+def _get_base_url(request: Optional[Request] = None) -> str:
+    """Determine the active base URL from the incoming request or Vercel environment."""
+    if request:
+        # Check forwarded headers for reverse proxies/Vercel
+        forwarded_proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+        forwarded_host = request.headers.get("x-forwarded-host", request.headers.get("host"))
+        if forwarded_host:
+            return f"{forwarded_proto}://{forwarded_host}".rstrip("/")
+        return str(request.base_url).rstrip("/")
+    return settings.effective_base_url
+
+
+def _link_to_response(link: Link, request: Optional[Request] = None) -> LinkResponse:
+    """Map an ORM Link to a public response, injecting the dynamic short URL."""
+    base_url = _get_base_url(request)
     return LinkResponse(
         id=link.id,
         short_code=link.short_code,
-        short_url=f"{settings.BASE_URL}/{link.short_code}",
+        short_url=f"{base_url}/{link.short_code}",
         long_url=link.long_url,
         is_masked=link.is_masked,
         custom_alias=link.custom_alias,
@@ -64,6 +80,7 @@ def _validate_url_scheme(url: str) -> None:
 )
 async def create_link(
     body: LinkCreate,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> LinkResponse:
     long_url = str(body.long_url)
@@ -104,7 +121,7 @@ async def create_link(
     # Warm the cache
     cache.set(short_code, link.long_url)
 
-    return _link_to_response(link)
+    return _link_to_response(link, request=request)
 
 
 # ── GET /api/links — List links (paginated) ──────────────────────────────
@@ -115,6 +132,7 @@ async def create_link(
     summary="List links",
 )
 async def list_links(
+    request: Request,
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
@@ -128,7 +146,7 @@ async def list_links(
     links = result.scalars().all()
 
     return LinkListResponse(
-        items=[_link_to_response(link) for link in links],
+        items=[_link_to_response(link, request=request) for link in links],
         total=total,
     )
 
@@ -142,13 +160,14 @@ async def list_links(
 )
 async def get_link(
     link_id: uuid.UUID,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> LinkResponse:
     result = await db.execute(select(Link).where(Link.id == link_id))
     link = result.scalar_one_or_none()
     if not link:
         raise HTTPException(status_code=404, detail="Link not found.")
-    return _link_to_response(link)
+    return _link_to_response(link, request=request)
 
 
 # ── PATCH /api/links/{link_id} — Update a link ──────────────────────────
@@ -161,6 +180,7 @@ async def get_link(
 async def update_link(
     link_id: uuid.UUID,
     body: LinkUpdate,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> LinkResponse:
     result = await db.execute(select(Link).where(Link.id == link_id))
@@ -195,7 +215,7 @@ async def update_link(
     # Refresh cache
     cache.set(link.short_code, link.long_url)
 
-    return _link_to_response(link)
+    return _link_to_response(link, request=request)
 
 
 # ── DELETE /api/links/{link_id} — Deactivate a link ─────────────────────
